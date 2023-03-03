@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Metadata:
+    Generator: "former2"
+Description: ""
+
+Parameters:
+    AMI:
+        Description: OS Golden Image
+        Type: String
+        Default: "ami-0b5eea76982371e91"
+    Hardware:
+        Description: Hardware
+        Type: String
+        Default: "t2.micro"
+    SSHKey:
+        Description: SSH Key Pair
+        Type: String
+        Default: "ec2-user"
+    UserData:
+        Description: Boot time actions
+        Type: String
+        Default: |
+            Content-Type: multipart/mixed; boundary="//"
+            MIME-Version: 1.0
+            --//
+            Content-Type: text/cloud-config; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="cloud-config.txt"
+            #cloud-config
+            # 
+            # This part is done only once, just after launching of the instance
+            # 
+            #package_update: true
+            #package_upgrade: true
+            #package_reboot_if_required: true
+            power_state:
+                delay: now
+                mode: poweroff
+                message: Powering off
+                timeout: 2
+                condition: true
+            
+            #runcmd:
+            #    - [ sh, -c, 'echo "Here is a line of text to log"' ]
+            #    - touch /tmp/i_actually_ran.txt
+            # 
+            # This part ensures that the final part runs on every boot
+            # 
+            cloud_final_modules:
+            - [scripts-user, always]
+            --//
+            Content-Type: text/x-shellscript; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="userdata.txt"
+            
+            #!/bin/bash
+            # 
+            # This part is done on every, single boot
+            # 
+            ls -1 /etc/ssh/*key | xargs -i ssh-keygen -l -f {}
+            --//--
+Resources:
+
+    EC2Instance:
+        Type: "AWS::EC2::Instance"
+        Properties:
+            ImageId: !Ref AMI
+            InstanceType: !Ref Hardware
+            KeyName: !Ref SSHKey
+            AvailabilityZone: !Sub "${AWS::Region}a"
+            UserData:
+                Fn::Base64:
+                    !Ref UserData
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "test1"
+
+    EC2Instance2:
+        Type: "AWS::EC2::Instance"
+        Properties:
+            ImageId: !Ref AMI
+            InstanceType: !Ref Hardware
+            KeyName: !Ref SSHKey
+            AvailabilityZone: !Sub "${AWS::Region}b"
+            UserData:
+                Fn::Base64:
+                    !Ref UserData
+            Tags: 
+              - 
+                Key: "Name"
+                Value: "test2"
