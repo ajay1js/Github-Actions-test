@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: This template creates an RDS database with MYSQl 5.7
+
+
+Metadata: 
+   License: Apache-2.0
+    
+Parameters:
+   DatabaseInstanceIdentifier:
+    Default: MySQLDatabase
+    Description: The database name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+
+   DatabaseName:
+    Default: applicationdb
+    Description: The database name
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+
+   DatabaseUser:
+    NoEcho: 'true'
+    Default: dbadmin
+    Description: The database admin account username
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: must begin with a letter and contain only alphanumeric characters. 
+
+   DBPassword:
+    NoEcho: 'true'
+    Description: The database admin account password
+    Default: Sp00rthimvaidya36
+    Type: String
+    MinLength: '8'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: must contain only alphanumeric characters. 
+
+   DatabaseBackupRetentionPeriod:
+    Description: The no of days for which automatic DB snapshots are retained
+    Default: '0'
+    Type: Number
+    MinValue: '0'
+    MaxValue: '35'
+    ConstraintDescription: Database backup retention period from 5 to 35 days.
+   
+   DatabaseAllocatedStorage:
+    Default: '20'
+    Description: The size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '1024'
+    ConstraintDescription: Must be between 5 and 1024
+
+   DBInstanceClass:
+    Description: The database instance type
+    Type: String
+    Default: db.t2.micro
+    AllowedValues: [db.t1.micro, db.m1.small, db.m1.medium, db.m1.large, db.m1.xlarge,
+      db.m2.xlarge, db.m2.2xlarge, db.m2.4xlarge, db.m3.medium, db.m3.large, db.m3.xlarge,
+      db.m3.2xlarge, db.m4.large, db.m4.xlarge, db.m4.2xlarge, db.m4.4xlarge, db.m4.10xlarge,
+      db.r3.large, db.r3.xlarge, db.r3.2xlarge, db.r3.4xlarge, db.r3.8xlarge, db.m2.xlarge,
+      db.m2.2xlarge, db.m2.4xlarge, db.cr1.8xlarge, db.t2.micro, db.t2.small, db.t2.medium,
+      db.t2.large]
+    ConstraintDescription: must select a valid database instance type. 
+
+   MultiAZDatabase:
+    Description: Multi-AZ master database
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']  
+
+Resources:
+   DBSecurityGroup:
+    Type: AWS::RDS::DBSecurityGroup
+    Properties:
+      DBSecurityGroupDescription: Subnet group for RDS database
+      SubnetIDs: default-vpc-034c27a509f427a19
+        
+   DatabaseInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: !Ref 'DatabaseName'
+      AllocatedStorage: !Ref 'DatabaseAllocatedStorage'
+      AvailabilityZone: ap-south-1
+      BackupRetentionPeriod: !Ref 'DatabaseBackupRetentionPeriod'
+      DBInstanceClass: !Ref 'DBInstanceClass'
+      DBInstanceIdentifier: !Ref 'DatabaseInstanceIdentifier'
+      DBSubnetGroupName: !Ref 'DBSecurityGroup'
+      Engine: MySQL
+      EngineVersion: 5.7.31
+      MasterUsername: !Ref 'DatabaseUser'
+      MasterUserPassword: !Ref 'DBPassword'
+      MultiAZ: !Ref 'MultiAZDatabase'
